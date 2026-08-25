@@ -1,0 +1,40 @@
+name: Android CI Build
+
+# Kích hoạt quy trình khi có mã mới đẩy lên nhánh main, hoặc bấm chạy thủ công
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build APK
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Kéo mã nguồn của bạn về máy ảo
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # 2. Cài đặt môi trường Java (Android hiện nay yêu cầu JDK 17)
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+          cache: 'gradle'
+
+      # 3. Cấp quyền thực thi cho Gradle Wrapper (Rất hay bị lỗi nếu thiếu bước này)
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+
+      # 4. Chạy lệnh biên dịch file APK (Bản Debug để test không cần ký chứng chỉ)
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug
+
+      # 5. Thu thập file APK đã build xong và tải lên thành tệp đính kèm
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
